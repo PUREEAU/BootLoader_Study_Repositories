@@ -90,22 +90,32 @@ int main(void)
   MX_GPIO_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-  uint8_t rx_data[15]={'\0'};
-  uint16_t rx_len = 0;
-
   BootLoader_Inin();
+
+    HAL_Delay(5000);
+    Int_BootLoader_JumpTo_Appliaction();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    HAL_GPIO_WritePin(GPIOB,GPIO_PIN_1,GPIO_PIN_RESET);
-    HAL_Delay(100);
-    HAL_GPIO_WritePin(GPIOB,GPIO_PIN_1,GPIO_PIN_SET);
-    HAL_Delay(100);
-    // printf("buuf:%d",bootLoaderReceiverBuffFullLength);
-    // HAL_Delay(1000);
+    // HAL_GPIO_WritePin(GPIOB,GPIO_PIN_1,GPIO_PIN_RESET);
+    // HAL_Delay(100);
+    BootLoader_Process();
+    // HAL_GPIO_WritePin(GPIOB,GPIO_PIN_1,GPIO_PIN_SET);
+    // HAL_Delay(100);
+
+    if ((bootLoaderReportPending != 0U) &&
+        (bootLoaderRxActive == 0U) &&
+        (bootLoaderFlashBusy == 0U))
+    {
+      bootLoaderReportPending = 0U;
+      printf("buuf:%u ore:%lu overflow:%u\r\n",
+             bootLoaderReceiverBuffFullLength,
+             (unsigned long)bootLoaderUartOverrunCount,
+             bootLoaderRxQueueOverflow);
+    }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

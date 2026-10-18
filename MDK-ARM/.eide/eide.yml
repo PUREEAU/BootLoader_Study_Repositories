@@ -186,7 +186,7 @@ targets:
               isChecked: true
               isStartup: true
               mem:
-                size: "0x4000"
+                size: "0x8000"
                 startAddr: "0x8000000"
               tag: IROM
             - id: 2
