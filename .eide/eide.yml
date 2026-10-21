@@ -13,46 +13,47 @@ virtualFolder:
       folders:
         - name: MDK-ARM
           files:
-            - path: startup_stm32f429xx.s
+            - path: MDK-ARM/startup_stm32f429xx.s
           folders: []
         - name: User
           files: []
           folders:
             - name: Core
               files:
-                - path: ../Core/Src/main.c
-                - path: ../Core/Src/gpio.c
-                - path: ../Core/Src/usart.c
-                - path: ../Core/Src/stm32f4xx_it.c
-                - path: ../Core/Src/stm32f4xx_hal_msp.c
+                - path: Core/Src/main.c
+                - path: Core/Src/gpio.c
+                - path: Core/Src/usart.c
+                - path: Core/Src/stm32f4xx_it.c
+                - path: Core/Src/stm32f4xx_hal_msp.c
               folders: []
     - name: Drivers
       files: []
       folders:
         - name: STM32F4xx_HAL_Driver
           files:
-            - path: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_uart.c
-            - path: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc.c
-            - path: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc_ex.c
-            - path: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash.c
-            - path: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash_ex.c
-            - path: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash_ramfunc.c
-            - path: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c
-            - path: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_dma_ex.c
-            - path: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_dma.c
-            - path: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c
-            - path: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr_ex.c
-            - path: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_cortex.c
-            - path: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal.c
-            - path: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_exti.c
+            - path: Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_uart.c
+            - path: Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc.c
+            - path: Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc_ex.c
+            - path: Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash.c
+            - path: Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash_ex.c
+            - path: Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash_ramfunc.c
+            - path: Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c
+            - path: Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_dma_ex.c
+            - path: Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_dma.c
+            - path: Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c
+            - path: Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr_ex.c
+            - path: Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_cortex.c
+            - path: Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal.c
+            - path: Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_exti.c
           folders: []
         - name: CMSIS
           files:
-            - path: ../Core/Src/system_stm32f4xx.c
+            - path: Core/Src/system_stm32f4xx.c
           folders: []
     - name: handware
       files:
-        - path: ../handware/BootLoader.c
+        - path: handware/BootLoader.c
+        - path: handware/App_BootLoader.c
       folders: []
     - name: ::CMSIS
       files: []
@@ -60,7 +61,7 @@ virtualFolder:
 dependenceList: []
 outDir: build
 miscInfo:
-  uid: 2791cacad51bc296e2e80616a1521d4f
+  uid: dc5ce08ed2223b6d15e34b78b7f18763
 targets:
   BootLoader_V1:
     cppPreprocessAttrs:
@@ -69,14 +70,14 @@ targets:
         - STM32F429xx
       incList:
         - .
-        - ../Core/Inc
-        - ../Drivers/STM32F4xx_HAL_Driver/Inc
-        - ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy
-        - ../Drivers/CMSIS/Device/ST/STM32F4xx/Include
-        - ../Drivers/CMSIS/Include
-        - ../handware
+        - Core/Inc
+        - Drivers/STM32F4xx_HAL_Driver/Inc
+        - Drivers/STM32F4xx_HAL_Driver/Inc/Legacy
+        - Drivers/CMSIS/Device/ST/STM32F4xx/Include
+        - Drivers/CMSIS/Include
+        - handware
         - .cmsis/include
-        - RTE/_BootLoader_V1
+        - MDK-ARM/RTE/_BootLoader_V1
       libList: []
     excludeList: []
     settings:
@@ -92,11 +93,11 @@ targets:
           afterBuildTasks:
             - name: "[Copy linker output for Keil User Commands]"
               abortAfterFailed: true
-              command: mkdir ${KEIL_OUTPUT_DIR} & copy "${OutDir}\${ProjectName}.axf" "${KEIL_OUTPUT_DIR}\${ProjectName}.axf"
-              disable: true
+              command: cd .\MDK-ARM && mkdir ${KEIL_OUTPUT_DIR} & copy "${OutDir}\${ProjectName}.axf" "${KEIL_OUTPUT_DIR}\${ProjectName}.axf"
+              disable: false
             - name: D:\KEIL_MDK\MDK_ARM\keil_v5\ARM\ARMCC\bin\fromelf.exe --bin --output "$L\@L.bin" "#L"
               abortAfterFailed: true
-              command: D:\KEIL_MDK\MDK_ARM\keil_v5\ARM\ARMCC\bin\fromelf.exe --bin --output "${KEIL_OUTPUT_DIR}\\${ProjectName}.bin" "${KEIL_OUTPUT_DIR}\${ProjectName}.axf"
+              command: cd .\MDK-ARM && D:\KEIL_MDK\MDK_ARM\keil_v5\ARM\ARMCC\bin\fromelf.exe --bin --output "${KEIL_OUTPUT_DIR}\\${ProjectName}.bin" "${KEIL_OUTPUT_DIR}\${ProjectName}.axf"
               disable: false
           asm-compiler:
             $use: asm-auto
@@ -197,23 +198,13 @@ targets:
                 startAddr: "0x0"
               tag: IROM
         useCustomScatterFile: false
-      GCC:
-        archExtensions: ""
-        cpuType: Cortex-M3
-        floatingPointHardware: none
-        options: ""
-        scatterFilePath: <YOUR_LINKER_SCRIPT>.lds
-        storageLayout:
-          RAM: []
-          ROM: []
-        useCustomScatterFile: true
     uploadConfigMap:
       JLink:
         baseAddr: ""
         bin: ""
         cpuInfo:
-          cpuName: STM32F429IG
-          vendor: ST
+          cpuName: "null"
+          vendor: "null"
         otherCmds: ""
         proType: 1
         speed: 8000
@@ -223,25 +214,3 @@ targets:
         interface: cmsis-dap
         target: stm32f4x
     uploader: OpenOCD
-  Debug:
-    cppPreprocessAttrs:
-      defineList: []
-      incList: []
-      libList: []
-    excludeList: []
-    settings: {}
-    toolchain: GCC
-    toolchainConfigMap:
-      GCC:
-        archExtensions: ""
-        cpuType: Cortex-M3
-        floatingPointHardware: none
-        options: ""
-        scatterFilePath: <YOUR_LINKER_SCRIPT>.lds
-        storageLayout:
-          RAM: []
-          ROM: []
-        useCustomScatterFile: true
-    uploadConfigMap:
-      JLink: null
-    uploader: JLink

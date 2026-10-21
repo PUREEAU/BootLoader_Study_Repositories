@@ -287,26 +287,44 @@ int fputc(int ch,FILE * f){
 
 void Int_BootLoader_JumpTo_Appliaction(void)
 {
-        __disable_irq();
-        __DSB(); 
-        __ISB();
-        SysTick->CTRL = 0;
-        SysTick->VAL  = 0;
-        SysTick->LOAD = 0;
-        __DSB();
-        __ISB();
+    static uint32_t appStack ;
+    static uint32_t appResetAddr ;
+    appStack = *(__IO uint32_t*)APP_START_ADDR;
+    appResetAddr = *(__IO uint32_t*)(APP_START_ADDR + 4);
+    // STM32F429 的主 SRAM 范围为 0x20000000 - 0x2002FFFF。
+    if ((appStack < 0x20000000UL) ||
+        (appStack >= 0x20030000UL))
+    {
+        printf("stack addr error\r\n");
+        return;
+    }
 
-        for(uint32_t i=0; i<8; i++)
-        {
-            NVIC->ICPR[i] = 0xFFFFFFFF;
-        }
-        uint32_t appStack = *(__IO uint32_t*)APP_START_ADDR;
-        __set_MSP(appStack);
-        SCB->VTOR = APP_START_ADDR;
-        typedef void (*AppResetHandler)(void);
-        uint32_t appResetAddr = *(__IO uint32_t*)(APP_START_ADDR + 4);
-        AppResetHandler JumpToApp = (AppResetHandler)appResetAddr;
-        
-        JumpToApp();
+    // 复位向量必须是 Flash 中的 Thumb 地址，最低位必须为 1。
+    if (((appResetAddr & 1U) == 0U) ||
+        ((appResetAddr & ~1UL) < APP_START_ADDR) ||
+        ((appResetAddr & ~1UL) >= APP_END_ADDR))
+    {
+        printf("reset handle error\r\n");
+        return;
+    }
+    __disable_irq();
+    __DSB(); 
+    __ISB();
+    SysTick->CTRL = 0;
+    SysTick->VAL  = 0;
+    SysTick->LOAD = 0;
+    __DSB();
+    __ISB();
+
+    for(uint32_t i=0; i<8; i++)
+    {
+        NVIC->ICPR[i] = 0xFFFFFFFF;
+    }
+    __set_MSP(appStack);
+    SCB->VTOR = APP_START_ADDR;
+    typedef void (*AppResetHandler)(void);
+    AppResetHandler JumpToApp = (AppResetHandler)appResetAddr;
+    
+    JumpToApp();
 }
 

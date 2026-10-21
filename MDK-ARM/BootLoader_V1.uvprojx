@@ -514,6 +514,11 @@
               <FileType>1</FileType>
               <FilePath>..\handware\BootLoader.c</FilePath>
             </File>
+            <File>
+              <FileName>App_BootLoader.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\handware\App_BootLoader.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
