@@ -285,7 +285,7 @@ int fputc(int ch,FILE * f){
 
 }
 
-void Int_BootLoader_JumpTo_Appliaction(void)
+bool Int_BootLoader_JumpTo_Appliaction(void)
 {
     static uint32_t appStack ;
     static uint32_t appResetAddr ;
@@ -296,7 +296,7 @@ void Int_BootLoader_JumpTo_Appliaction(void)
         (appStack >= 0x20030000UL))
     {
         printf("stack addr error\r\n");
-        return;
+        return 1;
     }
 
     // 复位向量必须是 Flash 中的 Thumb 地址，最低位必须为 1。
@@ -305,7 +305,7 @@ void Int_BootLoader_JumpTo_Appliaction(void)
         ((appResetAddr & ~1UL) >= APP_END_ADDR))
     {
         printf("reset handle error\r\n");
-        return;
+        return 1;
     }
     __disable_irq();
     __DSB(); 
@@ -326,5 +326,6 @@ void Int_BootLoader_JumpTo_Appliaction(void)
     AppResetHandler JumpToApp = (AppResetHandler)appResetAddr;
     
     JumpToApp();
+    return 0;
 }
 

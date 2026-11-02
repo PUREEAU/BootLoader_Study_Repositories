@@ -5,7 +5,7 @@
 #include "stdio.h"
 #include "string.h"
 #include "usart.h"
-
+#include "stdbool.h"
 
 #define BOOTLOADER_UART_RECEIVE_BUFF_SIZE 512
 #define BOOTLOADER_RX_QUEUE_SIZE 8000U
@@ -25,6 +25,6 @@ extern volatile uint8_t bootLoaderReportPending;
 void BootLoader_Inin(void);
 void BootLoader_Process(void);
 
-void Int_BootLoader_JumpTo_Appliaction(void);
+bool Int_BootLoader_JumpTo_Appliaction(void);
 
 #endif

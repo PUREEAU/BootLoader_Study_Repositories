@@ -7,5 +7,5 @@
 #include "BootLoader.h"
 
 void App_BootLoader_Init(void);
-
+void App_BootLoader_Work(void);
 #endif

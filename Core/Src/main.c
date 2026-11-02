@@ -26,6 +26,7 @@
 #include "string.h"
 #include "BootLoader.h"
 #include "App_BootLoader.h"
+#include "at24c64.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -91,37 +92,20 @@ int main(void)
   MX_GPIO_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-    // BootLoader_Inin();
-
-    // HAL_Delay(5000);
-    // Int_BootLoader_JumpTo_Appliaction();
-
-    App_BootLoader_Init();
+  IIC_Init();
+  AT_WriteData(0x0001, 8);
+  uint8_t readVal = AT_Read_Data(0x0001);
+  printf("readVal = %d\r\n",readVal);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    // HAL_GPIO_WritePin(GPIOB,GPIO_PIN_1,GPIO_PIN_RESET);
-    // HAL_Delay(100);
-    // BootLoader_Process();
-    // HAL_GPIO_WritePin(GPIOB,GPIO_PIN_1,GPIO_PIN_SET);
-    // HAL_Delay(100);
-
-    // if ((bootLoaderReportPending != 0U) &&
-    //     (bootLoaderRxActive == 0U) &&
-    //     (bootLoaderFlashBusy == 0U))
-    // {
-    //   bootLoaderReportPending = 0U;
-    //   printf("buuf:%u ore:%lu overflow:%u\r\n",
-    //          bootLoaderReceiverBuffFullLength,
-    //          (unsigned long)bootLoaderUartOverrunCount,
-    //          bootLoaderRxQueueOverflow);
-    // }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    // App_BootLoader_Work();
   }
   /* USER CODE END 3 */
 }
