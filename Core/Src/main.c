@@ -27,6 +27,7 @@
 #include "BootLoader.h"
 #include "App_BootLoader.h"
 #include "at24c64.h"
+#include "w25q32.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -93,9 +94,8 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
   IIC_Init();
-  AT_WriteData(0x0001, 8);
-  uint8_t readVal = AT_Read_Data(0x0001);
-  printf("readVal = %d\r\n",readVal);
+  SPI_Init();
+  // HAL_UARTEx_ReceiveToIdle_IT(&huart1, bootLoaderReceiverBuff, BOOTLOADER_UART_RECEIVE_BUFF_SIZE);
   /* USER CODE END 2 */
 
   /* Infinite loop */

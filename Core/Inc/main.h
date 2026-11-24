@@ -57,10 +57,18 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define SPI_CS_Pin GPIO_PIN_12
+#define SPI_CS_GPIO_Port GPIOH
 #define IIC_SCL_Pin GPIO_PIN_12
 #define IIC_SCL_GPIO_Port GPIOB
+#define SPI_CLK_Pin GPIO_PIN_13
+#define SPI_CLK_GPIO_Port GPIOB
 #define IIC_SDA_Pin GPIO_PIN_14
 #define IIC_SDA_GPIO_Port GPIOB
+#define SPI_DI_Pin GPIO_PIN_15
+#define SPI_DI_GPIO_Port GPIOB
+#define SPI_DO_Pin GPIO_PIN_9
+#define SPI_DO_GPIO_Port GPIOD
 
 /* USER CODE BEGIN Private defines */
 
