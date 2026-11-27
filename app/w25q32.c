@@ -434,147 +434,60 @@ uint8_t W25Q_Erase_Data(W25Q_EraseType type, uint32_t addr)
     return W25Q_Read_WaitBusy();
 }
 
-void W25Q_Test_CrossPage(void)
+uint8_t W25Q_Erase_Range(uint32_t addr, uint32_t len)
 {
-    printf("Enter CrossPage\r\n");   /* 如果这行都没有，说明前面就崩了 */
-    #define TEST_ADDR   0x0000F0UL
-    #define TEST_LEN    0x180UL        /* 384 字节，跨 3 页 */
+    uint32_t start, end, remain;
 
-    static uint8_t  wr_buf[TEST_LEN];
-    static uint8_t  rd_buf[TEST_LEN];
-    uint32_t i;
-    uint32_t ok_cnt  = 0;
-    uint32_t err_cnt = 0;
+    /* 参数检查 */
+    if (len == 0)
+        return 1;                         /* 无事可做 */
 
-    printf("\r\n===== W25Q32 Cross Page Test =====\r\n");
-    printf("Start Addr = 0x%06lX, Len = %lu bytes\r\n",
-           (unsigned long)TEST_ADDR, (unsigned long)TEST_LEN);
-    printf("Page split:\r\n");
-    printf("  Page0: 0x0000F0 ~ 0x0000FF (16B)\r\n");
-    printf("  Page1: 0x000100 ~ 0x0001FF (256B)\r\n");
-    printf("  Page2: 0x000200 ~ 0x00026F (112B)\r\n");
+    if (addr >= W25Q32_SIZE)
+        return 0;
 
-    /* ---------- 1. 准备测试数据：0x00 ~ 0x17F 循环 ---------- */
-    for (i = 0; i < TEST_LEN; i++)
+    if (len > (W25Q32_SIZE - addr))
+        return 0;                         /* 越界 */
+
+    /* ---- 计算实际要擦的扇区范围 ---- */
+    start = addr & ~((uint32_t)W25Q32_SECTOR_SIZE - 1);   /* 向下对齐 */
+    end   = addr + len;
+    if (end & (W25Q32_SECTOR_SIZE - 1))
+        end = (end & ~((uint32_t)W25Q32_SECTOR_SIZE - 1))
+              + W25Q32_SECTOR_SIZE;                       /* 向上对齐 */
+    if (end > W25Q32_SIZE)
+        end = W25Q32_SIZE;                                /* 末端裁剪 */
+
+    /* ---- 循环擦除，优先使用大块减少命令数 ---- */
+    while (start < end)
     {
-        wr_buf[i] = (uint8_t)(i & 0xFF);
-    }
+        remain = end - start;
 
-    /* ---------- 2. 擦除扇区 0 ---------- */
-    printf("\r\n[1] Erase Sector 0 (0x000000)...\r\n");
-    if (!W25Q_Erase_Data(W25Q_ERASE_SECTOR_4K, 0x000000))
-    {
-        printf("    Erase FAILED!\r\n");
-        return;
-    }
-    printf("    Erase OK\r\n");
-
-    /* ---------- 3. 擦除后确认全为 0xFF ---------- */
-    printf("\r\n[2] Read after erase (expect 0xFF)...\r\n");
-    memset(rd_buf, 0, sizeof(rd_buf));
-    if (!W25Q_Read_Data(TEST_ADDR, rd_buf, TEST_LEN))
-    {
-        printf("    Read FAILED!\r\n");
-        return;
-    }
-    for (i = 0; i < TEST_LEN; i++)
-    {
-        if (rd_buf[i] != 0xFF) err_cnt++;
-    }
-    printf("    Non-0xFF bytes: %lu\r\n", (unsigned long)err_cnt);
-    err_cnt = 0;
-
-    /* ---------- 4. 跨页写入 ---------- */
-    printf("\r\n[3] Write %lu bytes (auto split across 3 pages)...\r\n",
-           (unsigned long)TEST_LEN);
-    if (!W25Q_Write_Data(TEST_ADDR, wr_buf, TEST_LEN))
-    {
-        printf("    Write FAILED!\r\n");
-        return;
-    }
-    printf("    Write OK\r\n");
-
-    /* ---------- 5. 读回并逐字节对比 ---------- */
-    printf("\r\n[4] Read back and verify...\r\n");
-    memset(rd_buf, 0, sizeof(rd_buf));
-    if (!W25Q_Read_Data(TEST_ADDR, rd_buf, TEST_LEN))
-    {
-        printf("    Read FAILED!\r\n");
-        return;
-    }
-
-    for (i = 0; i < TEST_LEN; i++)
-    {
-        if (rd_buf[i] == wr_buf[i])
+        /* 64KB 块：要求 start 按 64KB 对齐，且剩余 >= 64KB */
+        if (((start & (W25Q32_BLOCK64_SIZE - 1)) == 0) &&
+            (remain >= W25Q32_BLOCK64_SIZE))
         {
-            ok_cnt++;
+            if (!W25Q_Erase_Data(W25Q_ERASE_BLOCK_64K, start))
+                return 0;
+            start += W25Q32_BLOCK64_SIZE;
         }
+        /* 32KB 块：要求 start 按 32KB 对齐，且剩余 >= 32KB */
+        else if (((start & (W25Q32_BLOCK32_SIZE - 1)) == 0) &&
+                 (remain >= W25Q32_BLOCK32_SIZE))
+        {
+            if (!W25Q_Erase_Data(W25Q_ERASE_BLOCK_32K, start))
+                return 0;
+            start += W25Q32_BLOCK32_SIZE;
+        }
+        /* 否则退化为 4KB 扇区擦除 */
         else
         {
-            err_cnt++;
-            if (err_cnt <= 8)
-            {
-                printf("    [MISMATCH] idx=%lu addr=0x%06lX wr=0x%02X rd=0x%02X\r\n",
-                       (unsigned long)i,
-                       (unsigned long)(TEST_ADDR + i),
-                       wr_buf[i], rd_buf[i]);
-            }
+            if (!W25Q_Erase_Data(W25Q_ERASE_SECTOR_4K, start))
+                return 0;
+            start += W25Q32_SECTOR_SIZE;
         }
     }
 
-    printf("\r\n[5] Result:\r\n");
-    printf("    Match    : %lu\r\n", (unsigned long)ok_cnt);
-    printf("    Mismatch : %lu\r\n", (unsigned long)err_cnt);
-
-    if (err_cnt == 0)
-        printf("\r\n===== TEST PASS =====\r\n");
-    else
-        printf("\r\n===== TEST FAIL =====\r\n");
-
-    /* ---------- 6. 打印首尾各 32 字节，便于肉眼对照 ---------- */
-    printf("\r\n[6] First 32 bytes @0x%06lX:\r\n", (unsigned long)TEST_ADDR);
-    for (i = 0; i < 32; i++)
-    {
-        printf("%02X ", rd_buf[i]);
-        if ((i & 15) == 15) printf("\r\n");
-    }
-
-    printf("\r\n[7] Last 32 bytes @0x%06lX:\r\n",
-           (unsigned long)(TEST_ADDR + TEST_LEN - 32));
-    for (i = TEST_LEN - 32; i < TEST_LEN; i++)
-    {
-        printf("%02X ", rd_buf[i]);
-        if (((i - (TEST_LEN - 32)) & 15) == 15) printf("\r\n");
-    }
-    printf("\r\n");
-}
-
-void W25Q_Test_Mini(void)
-{
-    uint8_t w[4] = {0xAA, 0x55, 0x12, 0x34};
-    uint8_t r[4] = {0};
-
-    printf("Mini test start\r\n");
-
-    printf("Erase 0x000000...\r\n");
-    if (!W25Q_Erase_Data(W25Q_ERASE_SECTOR_4K, 0x000000)) {
-        printf("Erase FAIL\r\n"); return;
-    }
-    printf("Erase OK\r\n");
-
-    printf("Write 4 bytes @0x000000...\r\n");
-    if (!W25Q_Write_Data(0x000000, w, 4)) {
-        printf("Write FAIL\r\n"); return;
-    }
-    printf("Write OK\r\n");
-
-    W25Q_Read_Data(0x000000, r, 4);
-    printf("Read back: %02X %02X %02X %02X\r\n", r[0], r[1], r[2], r[3]);
-
-    if (r[0]==0xAA && r[1]==0x55 && r[2]==0x12 && r[3]==0x34)
-        printf("Mini TEST PASS\r\n");
-    else
-        printf("Mini TEST FAIL\r\n");
+    return 1;
 }
 
 /*

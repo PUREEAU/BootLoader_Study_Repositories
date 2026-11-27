@@ -33,9 +33,12 @@
 
 #include "app_bootloader.h"
 #include "usart.h"
+#include "stdio.h"
 #include "string.h"
 #include "stdbool.h"
 #include "stdlib.h"
+#include "at24c64.h"
+#include "w25q32.h"
 /*
 *********************************************************************************************************
 *                                              LOCAL DEFINES
@@ -47,6 +50,17 @@
 #define UPGRADE_KEY_START_LENGTH    "StartLength:"
 #define UPGRADE_KEY_CRC32           "CRC32:"
 #define UPGRADE_UNIT_BYTE           'B'
+
+/* ---- 基础宽度（编译期常量，不依赖任何变量）---- */
+#define EE_SIZE_U8    1U
+#define EE_SIZE_U16   2U
+#define EE_SIZE_U32   4U
+
+/* ---- 升级信息区地址链 ---- */
+#define EE_ADDR_UPG_BASE      0x0000U
+#define EE_ADDR_UPG_FW_LEN    (EE_ADDR_UPG_BASE)
+#define EE_ADDR_UPG_CRC_VALUE (EE_ADDR_UPG_FW_LEN + EE_SIZE_U32)
+#define EE_ADDR_UPG_MAGIC     (EE_ADDR_UPG_CRC_VALUE + EE_SIZE_U32)   /* 加字段时往后接 */
 /*
 *********************************************************************************************************
 *                                             LOCAL CONSTANTS
@@ -108,14 +122,25 @@ static bool Parse_Upgrade_Info(const uint8_t *buf)
         return false;
     }
 
-    g_upgrade_info.firmware_len = (uint32_t)len;
-    g_upgrade_info.crc_value    = (uint32_t)crc;
+    g_upgrade_info.firmware_len.word = (uint32_t)len;
+    g_upgrade_info.crc_value.word    = (uint32_t)crc;
     return true;
 }
+
 static bool Save_Upgrade_Info(void){
-    
+    APP_UPGRADE_INFO_T info = {0};
+
+    AT_WriteDatas(EE_ADDR_UPG_FW_LEN,g_upgrade_info.firmware_len.bytes,EE_SIZE_U32);
+    AT_WriteDatas(EE_ADDR_UPG_CRC_VALUE,g_upgrade_info.crc_value.bytes,EE_SIZE_U32);
+    AT_ReadDatas(EE_ADDR_UPG_FW_LEN,info.firmware_len.bytes,EE_SIZE_U32);
+    AT_ReadDatas(EE_ADDR_UPG_CRC_VALUE,info.crc_value.bytes,EE_SIZE_U32);
+    if((info.firmware_len.word != g_upgrade_info.firmware_len.word) || (info.crc_value.word != g_upgrade_info.crc_value.word)){
+        return false;
+    }
     return true;
 }
+
+
 /*
 *********************************************************************************************************
 *                                       LOCAL CONFIGURATION ERRORS
@@ -157,9 +182,28 @@ void App_BootLoader_Receive_Work(void){
         }
             break;
         case BOOTLOADER_SAVE_UPGRADE_INFO:{
-
+            if(Save_Upgrade_Info()){
+                bootloader_state = BOOTLOADER_ERASE_W25Q32_FLASH;
+            }else{
+                printf("[APP_BOOTLOADER]:Save_Upgrade_Info FILE\r\n");
+                bootloader_state = BOOTLOADER_RECEIVE_IDEL;
+            }
         }
             break;
+        case BOOTLOADER_ERASE_W25Q32_FLASH:{
+            if(W25Q_Erase_Range(W25Q32_SIZE,g_upgrade_info.firmware_len.word)){
+                bootloader_state = BOOTLOADER_WRITE_W25Q32_FLASH;
+            }else{
+                printf("[APP_BOOTLOADER]:W25Q_Erase_Range FILE\r\n");
+                bootloader_state = BOOTLOADER_RECEIVE_IDEL;
+            }
+        }
+            break;
+        case BOOTLOADER_WRITE_W25Q32_FLASH:{
+            
+        }
+            break;
+
         default:
             break;
     }
@@ -178,7 +222,12 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
     }
 }
 
+int fputc(int ch,FILE * f){
 
+    HAL_UART_Transmit(&huart1,(uint8_t*)&ch,1,50);
+    return ch;
+
+}
 
 /*
 *********************************************************************************************************

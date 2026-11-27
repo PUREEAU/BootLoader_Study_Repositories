@@ -44,12 +44,18 @@ typedef enum app_bootloader_receive_state{
     BOOTLOADER_RECEIVE_UPGRADE_INFO,
     BOOTLOADER_SAVE_UPGRADE_INFO,
     BOOTLOADER_ERASE_W25Q32_FLASH,
+    BOOTLOADER_WRITE_W25Q32_FLASH,
     BOOTLOADER_RECEIVE_WORK,
 } APP_BOOTLOADER_RECEIVE_STATE;
 
+typedef union {
+    uint32_t word;
+    uint8_t  bytes[4];
+} U32_BYTES_T;
+
 typedef struct app_upgrade_info_t{
-    uint32_t firmware_len;      // 固件总长度（字节），64KB=65536，必须 32 位
-    uint32_t crc_value;         // 整包 CRC32 值
+    U32_BYTES_T firmware_len;      // 固件总长度（字节），64KB=65536，必须 32 位
+    U32_BYTES_T crc_value;         // 整包 CRC32 值
 } APP_UPGRADE_INFO_T;
 
 /*

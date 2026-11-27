@@ -112,9 +112,7 @@ typedef enum {
 */
 DEF_APP_W25Q32_EXT uint16_t W25Q64_ReadMID(void);
 DEF_APP_W25Q32_EXT uint32_t W25Q_ReadJEDEC(void);
-DEF_APP_W25Q32_EXT void W25Q_Test_CrossPage(void);
-void W25Q_Test_Mini(void);
-
+DEF_APP_W25Q32_EXT uint8_t W25Q_Erase_Range(uint32_t addr, uint32_t len);
 /*
 *********************************************************************************************************
 *                                               MODULE END
